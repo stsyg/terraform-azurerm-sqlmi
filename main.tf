@@ -17,13 +17,13 @@
 
 # Create Resource two groups
 resource "azurerm_resource_group" "primary" {
-name = "rg-primary3-sqlmi"
-location = "canadacentral"
+name = var.rg_pri
+location = var.location_pri
 }
 
 resource "azurerm_resource_group" "secondary" {
-  name     = "rg-secondary3-sqlmi"
-  location = "canadaeast"
+  name     = var.rg_sec
+  location = var.location_sec
 }
 
 # Create two vNets
@@ -490,14 +490,15 @@ resource "azurerm_virtual_network_peering" "peer_sec2pri" {
 
 # Create Primary SQL MI instance
 resource "azurerm_mssql_managed_instance" "primary" {
-  name                         = "sqlmiprimaryst010622"
+  name                         = var.primary_sqlmi.name
   resource_group_name          = azurerm_resource_group.primary.name
   location                     = azurerm_resource_group.primary.location
-  administrator_login          = "mradministrator"
+  administrator_login          = var.primary_sqlmi.administrator_login
   administrator_login_password = "STthisIsDog11"
   license_type                 = "BasePrice"
   subnet_id                    = azurerm_subnet.primary.id
   sku_name                     = "GP_Gen5"
+  timezone_id                  = "Eastern Standard Time" # if not specified, the default time zone is UTC
   vcores                       = 4
   storage_size_in_gb           = 32
 
@@ -511,12 +512,12 @@ resource "azurerm_mssql_managed_instance" "primary" {
   }
 }
 
-# Create Secondary SQL MI instance
+# Create Secondary (Failover) SQL MI instance
 resource "azurerm_mssql_managed_instance" "secondary" {
-  name                         = "sqlmisecondaryst010622"
+  name                         = var.secondary_sqlmi.name
   resource_group_name          = azurerm_resource_group.secondary.name
   location                     = azurerm_resource_group.secondary.location
-  administrator_login          = "mradministrator"
+  administrator_login          = var.secondary_sqlmi.administrator_login
   administrator_login_password = "STthisIsDog11"
   license_type                 = "BasePrice"
   subnet_id                    = azurerm_subnet.secondary.id
