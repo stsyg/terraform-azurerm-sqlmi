@@ -551,3 +551,67 @@ resource "azurerm_mssql_managed_instance" "secondary" {
 
   }
 }
+
+# Create Primary SQL MI instance #2
+resource "azurerm_mssql_managed_instance" "primary2" {
+  name                         = var.primary_sqlmi2.name
+  resource_group_name          = azurerm_resource_group.primary.name
+  location                     = azurerm_resource_group.primary.location
+  administrator_login          = var.primary_sqlmi2.administrator_login
+  administrator_login_password = "STthisIsDog11"
+  license_type                 = "BasePrice"
+  subnet_id                    = azurerm_subnet.primary.id
+  sku_name                     = "GP_Gen5"
+  timezone_id                  = "Eastern Standard Time" # if not specified, the default time zone is UTC
+  vcores                       = 4
+  storage_size_in_gb           = 32
+
+  depends_on = [
+    azurerm_subnet_network_security_group_association.primary,
+    azurerm_subnet_route_table_association.primary,
+  ]
+
+  tags = {
+    environment = "dev"
+  }
+}
+
+# Create Secondary (Failover) SQL MI instance #2
+resource "azurerm_mssql_managed_instance" "secondary2" {
+  name                         = var.secondary_sqlmi2.name
+  resource_group_name          = azurerm_resource_group.secondary.name
+  location                     = azurerm_resource_group.secondary.location
+  administrator_login          = var.secondary_sqlmi2.administrator_login
+  administrator_login_password = "STthisIsDog11"
+  license_type                 = "BasePrice"
+  subnet_id                    = azurerm_subnet.secondary.id
+  dns_zone_partner_id          = azurerm_mssql_managed_instance.primary2.id
+  sku_name                     = "GP_Gen5"
+  vcores                       = 4
+  storage_size_in_gb           = 32
+
+  depends_on = [
+    azurerm_subnet_network_security_group_association.secondary,
+    azurerm_subnet_route_table_association.secondary,
+    azurerm_mssql_managed_instance.primary,
+  ]
+
+  tags = {
+    environment = "dev"
+  }
+}
+
+# Create Failover Group between Primary and Secondary SQL MI instances #2
+ resource "azurerm_mssql_managed_instance_failover_group" "fgroup2" {
+  name                        = "dev10-stsqlmi-failover-group"
+#  resource_group_name         = azurerm_resource_group.primary.name
+  location                    = azurerm_mssql_managed_instance.primary2.location
+  managed_instance_id       = azurerm_mssql_managed_instance.primary2.id
+  partner_managed_instance_id = azurerm_mssql_managed_instance.secondary2.id
+
+  read_write_endpoint_failover_policy {
+    mode          = "Automatic"
+    grace_minutes = 60
+
+  }
+}

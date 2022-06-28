@@ -8,6 +8,16 @@ variable "secondary_sqlmi" {
   type        = map(string)
 }
 
+variable "primary_sqlmi2" {
+  description = "The Primary SQL MI instance #2 details"
+  type        = map(string)
+}
+
+variable "secondary_sqlmi2" {
+  description = "The Secondary (Failover) SQL MI instance #2 details"
+  type        = map(string)
+}
+
 variable "location_pri" {
   description = "Primary Azure region location for all resources"
 }
